@@ -50,9 +50,11 @@ indented relative to it.
 
 Can be used like this:
 
+```emacs-lisp
 (defun kotlin-mode-use-my-kotlin-indent ()
   (setq indent-line-function 'kotlin-mode--elk-indent-line))
 
 (add-hook 'kotlin-mode-hook 'kotlin-mode-use-my-kotlin-indent)
+```
 
 this will override original kotlin's mode indentation.
