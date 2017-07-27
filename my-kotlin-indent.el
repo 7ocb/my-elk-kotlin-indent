@@ -129,34 +129,30 @@
                           `(destructuring-bind 
                                (&optional ,type position)
                                (find-closest open-re close-re)
-                               (when ,type
-                                 ,@body))))
+                             (when ,type
+                               ,@body))))
     (cl-labels ((skip-sexp-back
                  ()
                  (with-search (type position)
-
-
-
-                              (cond ((eq type :open)
-                                     (goto-char position))
-
-                                    ((eq type :close)
-                                     (goto-char position)
-                                     (skip-sexp-back)
-                                     (skip-sexp-back)))))
+                              (switch type 
+                                      (:open
+                                       (goto-char position))
+                                      
+                                      (:close
+                                       (goto-char position)
+                                       (skip-sexp-back)
+                                       (skip-sexp-back)))))
                 (search-step 
                  ()
                  (with-search (type position)
 
-
-
-                              (cond ((eq type :open)
-                                     position)
-                                    
-                                    ((eq type :close)
-                                     (goto-char position)
-                                     (skip-sexp-back)
-                                     (search-step))))))
+                              (switch type
+                                      (:open
+                                       position)
+                                      (:close
+                                       (goto-char position)
+                                       (skip-sexp-back)
+                                       (search-step))))))
       (save-excursion
         (search-step)))))
 
@@ -184,7 +180,7 @@
     (save-excursion 
       (loop for base = (go-next-base) while base collect base))))
 
-(setq kotlin-mode-line-continuation-symbols '("\\+" "-" "=" "\\." "\\?\\." ":"))
+(setq kotlin-mode-line-continuation-symbols '("\\+" "-" "=" "\\." "\\?\\." ":" "as\\?" "\\?:" ","))
 
 (setq kotlin-block-indent-depth 4)
 (setq kotlin-continuation-indent-depth 4)
@@ -192,18 +188,19 @@
 
 (defun kotlin-mode--previous-indent ()
   (save-excursion 
-  (block 'searching
-    (let ((indent 0))
-      (loop for base in (find-base-positions)
-            do (destructuring-bind (type position) base
-                 (cond ((eq type :args)
-                        (save-excursion 
-                          (goto-char position)
-                          (cl-return-from 'searching (+ 1 indent (- position (line-beginning-position))))))
+    (block 'searching
+      (let ((indent 0))
+        (loop for base in (find-base-positions)
+              do (destructuring-bind (type position) base
+                   (switch type
+                           (:args
+                            (save-excursion 
+                              (goto-char position)
+                              (cl-return-from 'searching (+ 1 indent (- position (line-beginning-position))))))
 
-                       ((eq type :block)
-                        (setq indent (+ indent kotlin-block-indent-depth))))))
-      indent))))
+                           (:block
+                            (setq indent (+ indent kotlin-block-indent-depth))))))
+        indent))))
 
 (defun line-begins-with (regexp)
   ;; TODO: take string/comment into consideration
