@@ -188,6 +188,7 @@
 
 (defun kotlin-mode--previous-indent ()
   (save-excursion 
+    (beginning-of-line)
     (block 'searching
       (let ((indent 0))
         (loop for base in (find-base-positions)
@@ -217,19 +218,45 @@
            (+ kotlin-continuation-indent-depth))
         (0))))
 
+;; (defun position-in-current-line ()
+;;   "This takes tabs into consideration"
+;;   (save-excursion 
+;;     (let ((initial-point (point)))
+;;       (beginning-of-line)
+;;       (loop with result = 0
+;;             while (> initial-point (point))
+;;             do (progn 
+;;                  (setq result 
+;;                      (+ result
+;;                         (switch (char-after)
+;;                                 (32     ; space
+;;                                  1)
+;;                                 (?\t
+;;                                  (let ((over-the-last-tab-position (mod current-point tab-width)))
+;;                                    (if (eq 0 over-the-last-tab-position)
+;;                                        0
+;;                                      (- tab-width over-the-last-tab-position))
+;;                                    )))))
+;;                  (forward-char))
+;;             finally return result))))
+
 (defun kotlin-mode--elk-indent-line ()
   "Indent current line as kotlin code"
   (interactive)
-  (let ((line-position (- (point) (line-beginning-position)))
-        (line-indentation (current-indentation)))
-    (beginning-of-line)
+  (let ((was-column (current-column))
+        (was-indentation (current-indentation)))
+
+
     (if (bobp) ; 1.)
         (progn
           (indent-line-to 0))
-      (progn (indent-line-to (+ (kotlin-mode--previous-indent)
+      (progn (save-excursion
+               (indent-line-to (+ (kotlin-mode--previous-indent)
 
-                                (kotlin-mode--this-line-indent-change)))
-             (forward-char (- line-position line-indentation))))))
+                                (kotlin-mode--this-line-indent-change))))
+             ;; (beginning-of-line)
+             (when (< was-column was-indentation)
+               (back-to-indentation))))))
 
 ;; (test-indent
 ;; "class Camera360Model
